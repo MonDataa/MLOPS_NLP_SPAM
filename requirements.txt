@@ -1,0 +1,15 @@
+tensorflow
+numpy
+pandas
+seaborn
+matplotlib
+wordcloud
+scikit-learn
+boto3
+pyarrow
+deltalake
+ray[all]
+feast
+mlflow
+kubernetes
+sentence-transformers

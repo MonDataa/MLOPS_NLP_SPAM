@@ -1,0 +1,37 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: ray-serve-spam
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: ray-serve-spam
+  template:
+    metadata:
+      labels:
+        app: ray-serve-spam
+    spec:
+      containers:
+      - name: serve
+        image: spam-detection:latest
+        ports:
+        - containerPort: 8000
+  strategy:
+    canary:
+      steps:
+      - setWeight: 10
+      - pause: {duration: 10m}
+      - setWeight: 50
+      - pause: {duration: 10m}
+      - setWeight: 100
+      analysis:
+        metrics:
+        - name: error-rate
+          interval: 1m
+          thresholdNotInline:
+            threshold: 95
+        - name: latency
+          interval: 1m
+          thresholdNotInline:
+            threshold: 100

@@ -1,0 +1,47 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ingest-raw
+spec:
+  template:
+    spec:
+      containers:
+      - name: ingest
+        image: python:3.9
+        command: ["python", "/app/ingest_raw.py"]
+        volumeMounts:
+        - name: data
+          mountPath: /app/data
+        env:
+        - name: MINIO_ENDPOINT
+          value: "http://minio:9000"
+      volumes:
+      - name: data
+        configMap:
+          name: data-config
+      restartPolicy: Never
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: curate-text
+spec:
+  template:
+    spec:
+      containers:
+      - name: curate
+        image: python:3.9
+        command: ["python", "/app/curate_text.py"]
+        volumeMounts:
+        - name: lakehouse
+          mountPath: /app
+      restartPolicy: Never
+  backoffLimit: 1
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: data-config
+data:
+  spam_nospam.txt: |
+    # Put the data here or mount from PVC

@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ray-serve-spam
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ray-serve-spam
+  template:
+    metadata:
+      labels:
+        app: ray-serve-spam
+    spec:
+      containers:
+      - name: serve
+        image: spam-detection:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8000
+        - containerPort: 8265
+        env:
+        - name: MLFLOW_TRACKING_URI
+          value: "http://mlflow:5000"
+        - name: RAY_CLUSTER_NAME
+          value: "ray-cluster"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "2000m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ray-serve-spam
+spec:
+  selector:
+    app: ray-serve-spam
+  ports:
+  - name: api
+    port: 8000
+    targetPort: 8000
+  - name: ray
+    port: 8265
+    targetPort: 8265
+  type: LoadBalancer
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ray-serve-spam-ingress
+spec:
+  rules:
+  - host: spam-api.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: ray-serve-spam
+            port:
+              number: 8000

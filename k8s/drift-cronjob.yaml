@@ -1,0 +1,22 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: drift-check
+spec:
+  schedule: "0 */6 * * *"  # Every 6 hours
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: monitor
+            image: python:3.9
+            command: ["python", "/app/monitor_drift.py"]
+            volumeMounts:
+            - name: lakehouse
+              mountPath: /app
+          volumes:
+          - name: lakehouse
+            configMap:
+              name: lakehouse-code
+          restartPolicy: OnFailure

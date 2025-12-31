@@ -1,0 +1,25 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ray-train-spam
+spec:
+  template:
+    spec:
+      containers:
+      - name: trainer
+        image: python:3.9
+        command: ["python", "/app/train_spam.py"]
+        env:
+        - name: RAY_ADDRESS
+          value: "ray-cluster:6379"
+        - name: MLFLOW_TRACKING_URI
+          value: "http://mlflow:5000"
+        volumeMounts:
+        - name: training
+          mountPath: /app
+      volumes:
+      - name: training
+        configMap:
+          name: training-code
+      restartPolicy: Never
+  backoffLimit: 1
